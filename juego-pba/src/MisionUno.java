@@ -40,7 +40,7 @@ public class MisionUno {
             mapa.colocarPersonaje(guard);
         }
     }
-
+    // calcula la distancia entre dos puntos
     public int distancia(int x1, int y1, int x2, int y2) {
         int diferenciaX = x1 - x2;
         if (diferenciaX < 0) {
@@ -56,59 +56,71 @@ public class MisionUno {
     public void jugar() {
         Scanner sc = new Scanner(System.in);
         while (true) {
+            // imprime el mapa, snake y a los enemigos
             mapa.imprimirMapa(snake.getPosicion(), enemigos);
             System.out.println("Tarjeta obtenida: " + agarroLaTarjeta);
             System.out.println("Mover Snake: w=arriba, s=abajo, a=izquierda, d=derecha");
             String input = sc.nextLine();
-            int dx = 0, dy = 0;
+            int movimientoFila = 0, movimientoColumna = 0;
             switch (input) {
-                case "w": dx = -1;
+                // movimiento hacia arriba
+                case "w": movimientoFila = -1;
                 break;
-                case "s": dx = 1;
+                // movimiento hacia abajo
+                case "s": movimientoFila = 1;
                 break;
-                case "a": dy = -1;
+                // movimiento hacia izquierda
+                case "a": movimientoColumna = -1;
                 break;
-                case "d": dy = 1;
+                // movimiento hacia derecha
+                case "d": movimientoColumna = 1;
                 break;
                 default:
                     System.out.println("Entrada inválida");
                     continue;
             }
 
-            int nx = snake.getPosicion().x + dx;
-            int ny = snake.getPosicion().y + dy;
-            if (!mapa.esPosicionValida(nx, ny)) {
+            // calcula la posicion de snake en base al input del jugador
+            int nuevaFila = snake.getPosicion().x + movimientoFila;
+            int nuevaColumna = snake.getPosicion().y + movimientoColumna;
+            // en caso de que se termine el mapa, el movimiento será inválido
+            if (!mapa.esPosicionValida(nuevaFila, nuevaColumna)) {
                 System.out.println("Movimiento fuera del mapa");
                 continue;
             }
-            if (mapa.celdas[nx][ny].puertaBloqueada && !agarroLaTarjeta) {
+            // verifica si no tiene la tarjeta y si la puerta está bloqueada
+            if (mapa.celdas[nuevaFila][nuevaColumna].puertaBloqueada && !agarroLaTarjeta) {
                 System.out.println("La puerta está bloqueada. Necesitas la tarjeta.");
                 continue;
             }
 
-            //mover snake
+            // elimina a snake de la posicion y lo coloca en la nueva
             mapa.celdas[snake.getPosicion().x][snake.getPosicion().y].personaje = null;
-            snake.posicion = new Posicion(nx, ny);
-            mapa.celdas[nx][ny].personaje = snake;
+            snake.posicion = new Posicion(nuevaFila, nuevaColumna);
+            mapa.celdas[nuevaFila][nuevaColumna].personaje = snake;
 
-            //agarrar item
-            if (mapa.celdas[nx][ny].item != null) {
-                Item it = mapa.recogerItem(nx, ny);
+            // verifica si hay un item en la nueva posición
+            if (mapa.celdas[nuevaFila][nuevaColumna].item != null) {
+                Item it = mapa.recogerItem(nuevaFila, nuevaColumna);
+                // en caso de que sea una tarjeta, agarroLaTarjeta será true
                 if (it.tipo.equals("Tarjeta")) {
                     agarroLaTarjeta = true;
                     System.out.println("Has recogido la tarjeta de acceso.");
                 }
             }
 
-            //mover enemigos
+            // movimiento del enemigo en el mapa
             for (int i = 0; i < enemigos.length; i++) {
                 Personaje e = enemigos[i];
                 Posicion posAnt = e.getPosicion();
+                // elimina al enemigo de la posición
                 mapa.celdas[posAnt.x][posAnt.y].personaje = null;
+                // mueve al enemigo hacia snake
                 ((Enemigo) e).mover(mapa, snake.getPosicion());
                 Posicion posNuevo = e.getPosicion();
                 mapa.celdas[posNuevo.x][posNuevo.y].personaje = e;
 
+                // verifica si el enemigo nos detecto
                 if (((Enemigo) e).detectarSnake(snake.getPosicion())) {
                     System.out.println("¡Has sido capturado por un guardia! Reiniciando misión...");
                     reiniciar();
@@ -116,11 +128,12 @@ public class MisionUno {
                 }
             }
 
-            //verificar si tiene la llave y esta en la puerta
+            // verifica si tiene la tarjeta y esta en la puerta
             if (snake.getPosicion().equals(posicionPuerta) && agarroLaTarjeta) {
                 System.out.println("¡Misión completada! Has salido del hangar.");
                 System.out.println("***AUTO GUARDADO EXITOSO!***");
                 System.out.println("CÓDIGO:MISION2#3389");
+                // inicia la siguiente misión
                 MisionDos mision2 = new MisionDos();
                 mision2.jugar();
                 break;
